@@ -21,7 +21,7 @@ AGeneralStrategySpectatorPawn::AGeneralStrategySpectatorPawn(const FObjectInitia
 	DefaultCameraDistance = 2000.f;
 	DefaultCameraPitch = 35.f;
 	CameraAngleZ = 0.f;
-	CameraScrollBounds = 50.f;
+	CameraScrollBounds = 25.f;
 
 	CurrentCameraRotation = CameraAngleZ;
 	CurrentCameraDistance = DefaultCameraDistance;
@@ -92,10 +92,10 @@ void AGeneralStrategySpectatorPawn::WheelRotate(FVector2D MouseVelocity)
 
 	FRotator NewRotation(0.f, 0.f, 0.f);
 	CurrentCameraRotation += (MouseVelocity.X * CameraRotationSpeed);
-	CurrentCameraPitch += (MouseVelocity.Y * CameraRotationSpeed);
+	CurrentPawnPitch += (MouseVelocity.Y * CameraRotationSpeed);
 
 	NewRotation.Yaw = CurrentCameraRotation;
-	NewRotation.Pitch = CurrentCameraPitch;
+	NewRotation.Pitch = CurrentPawnPitch;
 
 	SetActorRotation(NewRotation);
 }
@@ -116,7 +116,7 @@ void AGeneralStrategySpectatorPawn::PanRight(float direction)
 	if (!bIsMobile || bWheelRotating) return;
 
 	float AmountToMove = direction * CameraTranslationSpeed;
-	FVector DeltaMovement = AmountToMove * (FRotator(0.0f, 90.0f, 0.0f) + GetIsolatedCameraYaw()).Vector();
+	FVector DeltaMovement = AmountToMove * (FRotator(0.f, 90.f, 0.f) + GetIsolatedCameraYaw()).Vector();
 	FVector NewLocation = GetActorLocation() + DeltaMovement;
 
 	SetActorLocation(NewLocation);
@@ -141,14 +141,15 @@ void AGeneralStrategySpectatorPawn::KeyRotate(float direction)
 	CurrentCameraRotation += direction * CameraRotationSpeed;
 
 	NewRotation.Yaw = CurrentCameraRotation;
+	NewRotation.Pitch = CurrentPawnPitch;
 
 	SetActorRotation(NewRotation);
 }
 
 void AGeneralStrategySpectatorPawn::PositionCamera()
 {
-	FVector newLocation(0.0f, 0.0f, 0.0f);
-	FRotator newRotation(0.0f, 0.0f, 0.0f);
+	FVector newLocation(0.f, 0.f, 0.f);
+	FRotator newRotation(0.f, 0.f, 0.f);
 
 	float sinCameraZAngle = FMath::Sin(FMath::DegreesToRadians(CameraAngleZ));
 	float cosCameraZAngle = FMath::Cos(FMath::DegreesToRadians(CameraAngleZ));
@@ -160,7 +161,7 @@ void AGeneralStrategySpectatorPawn::PositionCamera()
 	newLocation.Y = sinCameraZAngle * cosCameraHeightAngle * CurrentCameraDistance;
 	newLocation.Z = sinCameraHeightAngle * CurrentCameraDistance;
 
-	newRotation = (FVector(0.0f, 90.0f, 0.0f) - newLocation).Rotation();
+	newRotation = (FVector(0.f, 90.f, 0.f) - newLocation).Rotation();
 	newRotation.Yaw = 180.f;
 
 	// new camera location and rotation

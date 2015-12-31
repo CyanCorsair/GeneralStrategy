@@ -96,7 +96,8 @@ class GENERALSTRATEGY_API AGeneralStrategySpectatorPawn : public ASpectatorPawn
 
 		float CurrentCameraPitch,
 			  CurrentCameraDistance,
-			  CurrentCameraRotation;
+			  CurrentCameraRotation,
+			  CurrentPawnPitch;
 
 		bool bWheelRotating;
 
