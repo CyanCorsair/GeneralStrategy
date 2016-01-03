@@ -9,6 +9,8 @@ AGeneralStrategyPlayerController::AGeneralStrategyPlayerController()
 	bEnableClickEvents = true;
 	bEnableMouseOverEvents = true;
 
+	CurrentPawn = NULL;
+
 	FVector2D MousePosition(0.f, 0.f);
 	FVector2D MouseVelocity(0.f, 0.f);
 }
@@ -58,22 +60,22 @@ void AGeneralStrategyPlayerController::LeftMousePressed()
 
 void AGeneralStrategyPlayerController::LeftMouseReleased()
 {
-
 }
 
 void AGeneralStrategyPlayerController::RightMousePressed()
 {
-	CurrentPawn = Cast<AGeneralStrategySpectatorPawn>(GetPawn());
 }
 
 void AGeneralStrategyPlayerController::RightMouseReleased()
 {
 	if (CurrentSelection.Num() > 0 && !CurrentPawn->bPawnRotating)
 	{
-		FVector NewLocation(0.f, 0.f, 0.f);
+		FHitResult TraceResult(ForceInit);
+		GetHitResultUnderCursor(ECollisionChannel::ECC_WorldStatic, false, TraceResult);
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, FString::Printf(TEXT("Trace results %f, %f, %f."), TraceResult.Location.X, TraceResult.Location.Y, TraceResult.Location.Z));
 		for (auto& Unit : CurrentSelection)
 		{
-			Unit->SetActorLocation(NewLocation);
+			Unit->SetActorLocation(TraceResult.Location);
 		}
 	}
 
@@ -83,6 +85,8 @@ void AGeneralStrategyPlayerController::RightMouseReleased()
 void AGeneralStrategyPlayerController::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
+
+	if (CurrentPawn == NULL) CurrentPawn = Cast<AGeneralStrategySpectatorPawn>(GetPawn());
 
 	GetMousePosition(MousePosition.X, MousePosition.Y);
 	GetInputMouseDelta(MouseVelocity.X, MouseVelocity.Y);

@@ -7,6 +7,7 @@ AGeneralStrategySpectatorPawn::AGeneralStrategySpectatorPawn(const FObjectInitia
 	: Super(ObjInit)
 {
 	PrimaryActorTick.bCanEverTick = true;
+	PlayerController = NULL;
 
 	// Disable standard WASD movement bindings
 	bAddDefaultMovementBindings = false;
@@ -193,7 +194,7 @@ void AGeneralStrategySpectatorPawn::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
-	PlayerController = Cast<APlayerController>(GetController());
+	if (PlayerController == NULL) PlayerController = Cast<APlayerController>(GetController());
 
 	PlayerController->GetViewportSize(Width, Height);
 	PlayerController->GetMousePosition(MouseLocation.X, MouseLocation.Y);
