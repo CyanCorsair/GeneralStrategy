@@ -3,6 +3,9 @@
 #pragma once
 
 #include "GameFramework/PlayerController.h"
+
+#include "GeneralStrategySpectatorPawn.h"
+
 #include "GeneralStrategyPlayerController.generated.h"
 
 /**
@@ -13,4 +16,34 @@ class GENERALSTRATEGY_API AGeneralStrategyPlayerController : public APlayerContr
 {
 	GENERATED_BODY()
 		AGeneralStrategyPlayerController();
+
+	public:
+		UFUNCTION()
+			virtual void SetupInputComponent() override;
+
+		UFUNCTION()
+			void AddToSelection(AActor* Selected);
+
+		UFUNCTION()
+			void LeftMousePressed();
+
+		UFUNCTION()
+			void LeftMouseReleased();
+
+		UFUNCTION()
+			void RightMousePressed();
+
+		UFUNCTION()
+			void RightMouseReleased();
+
+		UFUNCTION()
+			virtual void Tick(float DeltaSeconds) override;
+
+	private:
+		TArray<AActor*> CurrentSelection;
+
+		AGeneralStrategySpectatorPawn* CurrentPawn;
+
+		FVector2D MousePosition,
+				  MouseVelocity;
 };

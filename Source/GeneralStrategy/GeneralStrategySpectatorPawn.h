@@ -89,19 +89,27 @@ class GENERALSTRATEGY_API AGeneralStrategySpectatorPawn : public ASpectatorPawn
 
 		/*===============================================================*/
 
+		bool bPawnRotating,
+			bOldPawnRotating;
+
 	private:
 		
 		// Player input component constructor
 		void SetupPlayerInputComponent(class UInputComponent* InputComponent);
+
+		// The player controller
+		APlayerController* PlayerController;
 
 		float CurrentCameraPitch,
 			  CurrentCameraDistance,
 			  CurrentCameraRotation,
 			  CurrentPawnPitch;
 
-		bool bWheelRotating;
+		int32 Width, Height;
 
-		FVector2D CurrentMouseLocation;
+		FVector2D MouseLocation,
+				  MouseVelocity,
+				  ViewportSize;
 
 		/*===============================================================*/
 
@@ -116,7 +124,13 @@ class GENERALSTRATEGY_API AGeneralStrategySpectatorPawn : public ASpectatorPawn
 			void WheelZoomOut();
 
 		UFUNCTION()
-			void WheelRotate(FVector2D MouseVelocity);
+			void OnBeginRotation();
+
+		UFUNCTION()
+			void OnEndRotation();
+
+		UFUNCTION()
+			void PawnRotate(FVector2D MouseVelocity);
 
 		//--- KEYBOARD FUNCTIONS
 		UFUNCTION()

@@ -18,7 +18,7 @@ AGeneralStrategySpectatorPawn::AGeneralStrategySpectatorPawn(const FObjectInitia
 	bUseControllerRotationYaw = false;
 
 	// Set up camera defaults
-	DefaultCameraDistance = 2000.f;
+	DefaultCameraDistance = 3000.f;
 	DefaultCameraPitch = 35.f;
 	CameraAngleZ = 0.f;
 	CameraScrollBounds = 25.f;
@@ -27,6 +27,8 @@ AGeneralStrategySpectatorPawn::AGeneralStrategySpectatorPawn(const FObjectInitia
 	CurrentCameraDistance = DefaultCameraDistance;
 	CurrentCameraPitch = DefaultCameraPitch;
 
+	bPawnRotating = false;
+	bOldPawnRotating = false;
 	bIsMobile = true;
 
 	// Minimum and maximum camera values
@@ -44,7 +46,7 @@ AGeneralStrategySpectatorPawn::AGeneralStrategySpectatorPawn(const FObjectInitia
 	// Set up the camera component and position it
 	CameraComponent = ObjInit.CreateDefaultSubobject<UCameraComponent>(this, TEXT("DEFAULT CAMERA"));
 	CameraComponent->AttachParent = this->GetRootComponent();
-	CameraComponent->bUsePawnControlRotation = false; // We don't want the pawn's rotation either
+	//CameraComponent->bUsePawnControlRotation = false; // We don't want the pawn's rotation either
 	PositionCamera();
 }
 
@@ -68,7 +70,7 @@ void AGeneralStrategySpectatorPawn::SetupPlayerInputComponent(class UInputCompon
 
 void AGeneralStrategySpectatorPawn::WheelZoomIn()
 {
-	if (!bIsMobile || bWheelRotating) return;
+	if (!bIsMobile || bPawnRotating) return;
 
 	CurrentCameraDistance -= 0.65f * WheelZoomSpeed;
 	CurrentCameraDistance = FMath::Clamp(CurrentCameraDistance, CameraMinDistance, CameraMaxDistance);
@@ -78,7 +80,7 @@ void AGeneralStrategySpectatorPawn::WheelZoomIn()
 
 void AGeneralStrategySpectatorPawn::WheelZoomOut()
 {
-	if (!bIsMobile || bWheelRotating) return;
+	if (!bIsMobile || bPawnRotating) return;
 
 	CurrentCameraDistance += 0.65f * WheelZoomSpeed;
 	CurrentCameraDistance = FMath::Clamp(CurrentCameraDistance, CameraMinDistance, CameraMaxDistance);
@@ -86,7 +88,19 @@ void AGeneralStrategySpectatorPawn::WheelZoomOut()
 	PositionCamera();
 }
 
-void AGeneralStrategySpectatorPawn::WheelRotate(FVector2D MouseVelocity)
+void AGeneralStrategySpectatorPawn::OnBeginRotation()
+{
+	bPawnRotating = true;
+	PlayerController->bShowMouseCursor = false;
+}
+
+void AGeneralStrategySpectatorPawn::OnEndRotation()
+{
+	bPawnRotating = false;
+	PlayerController->bShowMouseCursor = true;
+}
+
+void AGeneralStrategySpectatorPawn::PawnRotate(FVector2D MouseVelocity)
 {
 	if (!bIsMobile) return;
 
@@ -102,7 +116,7 @@ void AGeneralStrategySpectatorPawn::WheelRotate(FVector2D MouseVelocity)
 
 void AGeneralStrategySpectatorPawn::PanForward(float direction)
 {
-	if (!bIsMobile || bWheelRotating) return;
+	if (!bIsMobile || bPawnRotating) return;
 
 	float AmountToMove = direction * CameraTranslationSpeed;
 	FVector DeltaMovement = AmountToMove * GetIsolatedCameraYaw().Vector();
@@ -113,7 +127,7 @@ void AGeneralStrategySpectatorPawn::PanForward(float direction)
 
 void AGeneralStrategySpectatorPawn::PanRight(float direction)
 {
-	if (!bIsMobile || bWheelRotating) return;
+	if (!bIsMobile || bPawnRotating) return;
 
 	float AmountToMove = direction * CameraTranslationSpeed;
 	FVector DeltaMovement = AmountToMove * (FRotator(0.f, 90.f, 0.f) + GetIsolatedCameraYaw()).Vector();
@@ -124,7 +138,7 @@ void AGeneralStrategySpectatorPawn::PanRight(float direction)
 
 void AGeneralStrategySpectatorPawn::KeyZoom(float direction)
 {
-	if (!bIsMobile || bWheelRotating) return;
+	if (!bIsMobile || bPawnRotating) return;
 
 	float AmountToMove = direction * CameraZoomSpeed;
 	CurrentCameraDistance += AmountToMove;
@@ -135,7 +149,7 @@ void AGeneralStrategySpectatorPawn::KeyZoom(float direction)
 
 void AGeneralStrategySpectatorPawn::KeyRotate(float direction)
 {
-	if (!bIsMobile || bWheelRotating) return;
+	if (!bIsMobile || bPawnRotating) return;
 
 	FRotator NewRotation(0.f, 0.f, 0.f);
 	CurrentCameraRotation += direction * CameraRotationSpeed;
@@ -179,31 +193,18 @@ void AGeneralStrategySpectatorPawn::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
-	float LocationX, LocationY;
-	float DeltaX, DeltaY;
-	int Width, Height;
+	PlayerController = Cast<APlayerController>(GetController());
 
-	APlayerController* PlayerController = Cast<APlayerController>(GetController());
-	PlayerController->GetMousePosition(LocationX, LocationY);
-	PlayerController->GetInputMouseDelta(DeltaX, DeltaY);
 	PlayerController->GetViewportSize(Width, Height);
-
-	FVector2D MouseLocation,
-			  MouseVelocity,
-			  ViewportSize;
+	PlayerController->GetMousePosition(MouseLocation.X, MouseLocation.Y);
+	PlayerController->GetInputMouseDelta(MouseVelocity.X, MouseVelocity.Y);
 
 	ViewportSize.X = Width * 1.f;
 	ViewportSize.Y = Height * 1.f;
 
-	MouseVelocity.X = DeltaX;
-	MouseVelocity.Y = DeltaY;
-
-	MouseLocation.X = LocationX;
-	MouseLocation.Y = LocationY;
-
 	//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Mouse: x: %f, y: %f; Viewport: Width: %f, Height: %f"), MouseLocation.X, MouseLocation.Y, ViewportSize.X, ViewportSize.Y));
 
-	if (MouseLocation.X <= CameraScrollBounds && MouseLocation.X >= 5)
+	if (MouseLocation.X <= CameraScrollBounds && MouseLocation.X >= 0)
 	{
 		PanRight(-1.f);
 	}
@@ -213,7 +214,7 @@ void AGeneralStrategySpectatorPawn::Tick(float DeltaSeconds)
 		PanRight(1.f);
 	}
 
-	if (MouseLocation.Y <= CameraScrollBounds && MouseLocation.Y >= 5)
+	if (MouseLocation.Y <= CameraScrollBounds && MouseLocation.Y >= 0)
 	{
 		PanForward(1.f);
 	}
@@ -223,12 +224,8 @@ void AGeneralStrategySpectatorPawn::Tick(float DeltaSeconds)
 		PanForward(-1.f);
 	}
 
-	if (PlayerController->IsInputKeyDown(EKeys::MiddleMouseButton))
+	if (bPawnRotating)
 	{
-		bWheelRotating = true;
-		WheelRotate(MouseVelocity);
-	}
-	else {
-		bWheelRotating = false;
+		PawnRotate(MouseVelocity);
 	}
 }
